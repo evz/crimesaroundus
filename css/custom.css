@@ -1,7 +1,16 @@
+body {
+  padding-top: 50px;
+  font-size: 16px;
+}
+
 .violent { color: #984ea3; }
 .property { color: #e41a1c; }
 .quality-of-life { color: #4daf4a;}
 .other { color: #377eb8;}
+
+#mapinfo {
+  padding: 10px 15px;
+}
 
 .saved-search, .delete-search {
     display: inline !important;
@@ -9,24 +18,6 @@
 .saved-searches li {
     border-bottom: 1px solid #333;
     padding-top: 5px;
-}
-.about p, .about li {
-    font-size: 14pt;
-}
-
-.top-bar {
-    margin-bottom: 0px !important;
-}
-
-.light {
-    font-weight: 300;
-}
-.fixed-bottom {
-    left: 0;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    z-index: 99;
 }
 
 .date-wrapper {
@@ -48,29 +39,8 @@ ul {
 }
 
 .meta.leaflet-control {
-    width: 35%;
     background-color: #fff;
-    padding: 10px 0px;
-}
-
-.leaflet-container h1 {
-    font-size: 44px;
-}
-
-.leaflet-container h3 {
-    font-size: 27px;
-}
-
-.leaflet-container h5 {
-    font-size: 17px;
-}
-
-.meta h1 {
-    margin-bottom: 5px !important;
-}
-
-.meta h5 {
-    margin: 0 0 10px 0 !important;
+    padding: 10px 10px;
 }
 
 ul.chosen-choices li input {

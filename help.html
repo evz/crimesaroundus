@@ -1,38 +1,54 @@
 <!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>crimearound.us | Help</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width">
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="../../assets/ico/favicon.ico">
 
-        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+    <title>crimearound.us - Help</title>
 
-        <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="foundation/stylesheets/foundation.min.css">
-        <link rel="stylesheet" href="foundation/stylesheets/app.css">
-        <link rel="stylesheet" href="foundation/stylesheets/general_foundicons.css">
-    </head>
-    <body>
-        <div class="fixed">
-            <nav class="top-bar">
-                <ul>
-                    <li class="name"><h1><a href="/">crimearound.us</a></h1></li>
-                </ul>
-                <section>
-                    <ul class="right">
-                        <li><a href="/about.html"><i class="fa fa-info-circle"></i> About</a></li>
-                        <li><a href="/help.html"><i class="fa fa-question-circle"></i> Help</a></li>
-                    </ul>
-                </section>
-            </nav>
+    <!-- Bootstrap core CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/chosen.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/css/custom.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">crimearound.us</a>
         </div>
-        <div class="row">
-            <div class="ten columns centered about">
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav pull-right">
+            <li><a href="/about.html"><i class="fa fa-info-circle"></i> About</a></li>
+            <li><a href="/help.html"><i class="fa fa-question-circle"></i> Help</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+    <div class="container">
+        <div class='row'>
+            <div class='col-md-10'>
                 <h2 class="light">Help</h2>
                 <h3 id='drawing-on-the-map'>Drawing on the map</h3>
                 <p>
@@ -42,15 +58,15 @@
                 </p>
 
                 <div class="row">
-                  <div class="four columns">
+                  <div class="col-md-4">
                     <img src='/images/map_drawing_1.png' alt='' />
                     <br />1. Select the shape or box tool on the left side of the map
                   </div>
-                  <div class="four columns">
+                  <div class="col-md-4">
                     <img src='/images/map_drawing_2.png' alt='' />
                     <br />2. Click on the points on the map to bound your box
                   </div>
-                  <div class="four columns">
+                  <div class="col-md-4">
                     <img src='/images/map_drawing_3.png' alt='' />
                     <br />3. When done, click the <strong>search</strong> button and see your results
                   </div>
@@ -60,7 +76,9 @@
                 <h3 id='filters'>Filters</h3>
                 <p>
                     In addition to drawing on the map, you can filter on different crime attributes.
+                </p>
 
+                <p>
                     <img src='/images/filters.png' alt='Search filters' />
                 </p>
 
@@ -112,10 +130,13 @@
                 </p>
             </div>
         </div>
-        <script src="foundation/javascripts/foundation.min.js"></script>
-        <script src="foundation/javascripts/app.js"></script>
+    </div>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" />
+    
 
-        <script src="js/jquery.ba-hashchange.js"></script>
-        <script src="js/analytics_lib.js"></script>
+    <script src="js/jquery.ba-hashchange.js"></script>
+    <script src="js/analytics_lib.js"></script>
     </body>
 </html>
