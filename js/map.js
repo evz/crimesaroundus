@@ -57,57 +57,6 @@ $(window).resize(function () {
     map.on('draw:created', draw_create);
     map.on('draw:edited', draw_edit);
     map.on('draw:deleted', draw_delete);
-    if(window.location.hash){
-        var hash = window.location.hash.slice(1,window.location.hash.length);
-        var query = parseParams(hash);
-        $('#map').spin('large');
-        $.when(get_results(query)).then(
-            function(resp){
-                reload_state(query, resp);
-            }
-        ).fail();
-    } else {
-        map.fitBounds([[41.644286009999995, -87.94010087999999], [42.023134979999995, -87.52366115999999]]);
-    }
-
-    $.getJSON('/js/beats.json', function(resp){
-        var beat_select = "<select id='police-beat' data-placeholder='All police beats' class='chosen-select form-control' multiple>";
-        var keys = [];
-        for (k in resp){
-            if (resp.hasOwnProperty(k)){
-                keys.push(k)
-            }
-        }
-        keys.sort();
-        sorted_resp = {};
-        for (i = 0; i < keys.length; i++){
-            var k = keys[i];
-            sorted_resp[k] = resp[k];
-        }
-        $.each(sorted_resp, function(district, beats){
-            beat_select += "<optgroup label='" + district + "'>";
-            $.each(beats, function(i, beat){
-                beat_select += "<option value='" + beat + "'>" + beat + "</option>";
-            })
-            beat_select += "</optgroup>";
-        });
-        beat_select += "</select>";
-        $('#beat-filters').append(beat_select);
-        $('.chosen-select').chosen();
-        $('#submit-query').on('click', function(e){
-            e.preventDefault();
-            submit_search();
-        });
-        $('#reset').on('click', function(e){
-            e.preventDefault();
-            window.location.hash = '';
-            window.location.reload();
-        });
-
-        $('#report').on('click', get_report);
-        $('#remember').on('click', remember_search);
-        $('#print').on('click', print);
-    })
 
     start_date = moment().subtract('d', 9);
     end_date = moment().subtract('d', 8);
@@ -159,6 +108,66 @@ $(window).resize(function () {
             $('.saved-search').on('click', load_remembered_search);
         }
     }
+
+    $.getJSON('/js/beats.json', function(resp){
+        var beat_select = "<select id='police-beat' data-placeholder='All police beats' class='chosen-select form-control' multiple>";
+        var keys = [];
+        for (k in resp){
+            if (resp.hasOwnProperty(k)){
+                keys.push(k)
+            }
+        }
+        keys.sort();
+        sorted_resp = {};
+        for (i = 0; i < keys.length; i++){
+            var k = keys[i];
+            sorted_resp[k] = resp[k];
+        }
+        $.each(sorted_resp, function(district, beats){
+            beat_select += "<optgroup label='" + district + "'>";
+            $.each(beats, function(i, beat){
+                beat_select += "<option value='" + beat + "'>" + beat + "</option>";
+            })
+            beat_select += "</optgroup>";
+        });
+        beat_select += "</select>";
+        $('#beat-filters').append(beat_select);
+        $('.chosen-select').chosen();
+        $('#submit-query').on('click', function(e){
+            e.preventDefault();
+            submit_search();
+        });
+        $('#reset').on('click', function(e){
+            e.preventDefault();
+            window.location.hash = '';
+            window.location.reload();
+        });
+
+        $('#report').on('click', get_report);
+        $('#remember').on('click', remember_search);
+        $('#print').on('click', print);
+
+        if(window.location.hash){
+            var hash = window.location.hash.slice(1,window.location.hash.length);
+            var query = parseParams(hash);
+            $('#map').spin('large');
+            $.when(get_results(query)).then(
+                function(resp){
+                    reload_state(query, resp);
+                }
+            ).fail();
+        } else {
+            map.fitBounds([[41.644286009999995, -87.94010087999999], [42.023134979999995, -87.52366115999999]]);
+                
+            var crime_types = "THEFT,BATTERY,CRIMINAL DAMAGE,NARCOTICS";
+            $.each(crime_types.split(","), function(i,e){
+                $("#crime-type option[value='" + e + "']").prop("selected", true);
+            });
+            $('#crime-type').trigger('chosen:updated');
+
+            $('#submit-query').trigger('click');
+        }
+    })
 
     function convertTime(time){
         var meridian = time < 12 ? 'am' : 'pm';
