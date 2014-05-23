@@ -367,7 +367,7 @@
         start_date = moment(query['obs_date__ge']);
         end_date = moment(query['obs_date__le']);
         update_date_range();
-        
+
         $('#date_range').data('daterangepicker').setStartDate(start_date);
         $('#date_range').data('daterangepicker').setEndDate(end_date);
 
@@ -383,8 +383,8 @@
             });
             $('#crime-type').trigger('chosen:updated');
         }
-        if(typeof query['location_description'] !== 'undefined'){
-            $.each(query['location_description'].split(','), function(i, loc){
+        if(typeof query['locations'] !== 'undefined'){
+            $.each(query['locations'].split(','), function(i, loc){
                 $('#crime-location').find('[value="' + loc + '"]').attr('selected', 'selected');
             });
             $('#crime-location').trigger('chosen:updated');
