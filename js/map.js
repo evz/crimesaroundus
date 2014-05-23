@@ -1,3 +1,10 @@
+$(window).resize(function () {
+  var h = $(window).height(),
+    offsetTop = 50; // Calculate the top offset
+
+  $('#map').css('height', (h - offsetTop));
+}).resize();
+
 (function(){
     var drawnItems = new L.FeatureGroup();
     var crimes = new L.FeatureGroup();
@@ -32,10 +39,6 @@
         }
     }
 
-    $('.full-height').height(window.innerHeight - 45);
-    window.onresize = function(event){
-        resize_junk();
-    }
     map = L.mapbox.map('map', 'datamade.hn83a654', {attributionControl: false})
         .fitBounds([[41.644286009999995, -87.94010087999999], [42.023134979999995, -87.52366115999999]]);
     map.addLayer(drawnItems);
@@ -100,6 +103,10 @@
             window.location.hash = '';
             window.location.reload();
         });
+
+        $('#report').on('click', get_report);
+        $('#remember').on('click', remember_search);
+        $('#print').on('click', print);
     })
 
     start_date = moment().subtract('d', 9);
@@ -137,26 +144,21 @@
             $('#time-end').data('value', e);
         }
     });
-    // if (typeof $.cookie('crimearound_us') === 'undefined'){
-    //     $.cookie('crimearound_us', JSON.stringify([]), {
-    //         json: true,
-    //         expires: 365
-    //     });
-    // } else {
-    //     var saves = $.cookie('crimearound_us');
-    //     saves = $.parseJSON(saves);
-    //     if (saves.length > 0){
-    //         var item = '<li class="has-dropdown"><a href="#">Remembered searches</a><ul class="dropdown saved-searches">';
-    //         $.each(saves, function(i, save){
-    //             item += '<li><a class="saved-search" href="javascript://">' + save.name + '</a>'
-    //             item += '<a href="javascript://" class="delete-search"><i class="foundicon-remove"></i></a></li>'
-    //         })
-    //         item += '</ul></li>';
-    //         $('#right-nav').prepend(item);
-    //         $('.saved-search').on('click', load_remembered_search);
-    //         $('.delete-search').on('click', delete_search);
-    //     }
-    // }
+    if (typeof $.cookie('crimearound_us') === 'undefined'){
+        $.cookie('crimearound_us', JSON.stringify([]), {
+            json: true,
+            expires: 365
+        });
+    } else {
+        var saves = $.cookie('crimearound_us');
+        saves = $.parseJSON(saves);
+        if (saves.length > 0){
+            $.each(saves, function(i, save){
+                $('.saved-searches').append('<li><a class="saved-search" href="#"><i class="fa fa-star"></i> ' + save.name + '</a></li>');
+            })
+            $('.saved-search').on('click', load_remembered_search);
+        }
+    }
 
     function convertTime(time){
         var meridian = time < 12 ? 'am' : 'pm';
@@ -199,7 +201,8 @@
     }
 
     function submit_search(){
-        $('#map').spin('large')
+        $('#remember i').attr('class', 'fa fa-star-o');
+        $('#map').spin('large');
         var query = {'dataset_name': 'chicago_crimes_all'};
         var layers = drawnItems.getLayers();
         if (layers.length > 0){
@@ -321,25 +324,6 @@
             }
         });
         map.addLayer(crimes);
-        $('#report').show();
-        $('#report').each(function(r){
-            if(typeof $._data(this, 'events') === 'undefined'){
-                $('#report').on('click', get_report);
-            }
-        })
-        $('#remember').show();
-        $('#remember').each(function(r){
-            if(typeof $._data(this, 'events') === 'undefined'){
-                $('#remember').on('click', remember_search);
-            }
-        })
-
-        $('#print').show();
-        $('#print').each(function(r){
-            if(typeof $._data(this, 'events') === 'undefined'){
-                $('#print').on('click', print);
-            }
-        })
         window.location.hash = $.param(query);
     }
 
@@ -419,32 +403,14 @@
         var cookie_val = $.parseJSON($.cookie('crimearound_us'));
         cookie_val.push(query);
         $.cookie('crimearound_us', JSON.stringify(cookie_val));
-        if($('#remember').find('i.foundicon-checkmark').length > 0){
-            $('#remember i.foundicon-checkmark').hide(500);
-            $('#remember i.foundicon-checkmark').remove();
-        }
-        $('#remember').append('<i class="foundicon-checkmark" style="display:none; color:#008837;"> </i>');
-        $('#remember i.foundicon-checkmark').show(500);
-        var item = '';
-        if($('#right-nav').find('ul.dropdown').length > 0){
-            item += '<li><a class="saved-search" href="javascript://">' + query['name'] + '</a>'
-            item += '<a href="javascript://" class="delete-search"><i class="foundicon-remove"></i></a></li>'
-            $('#right-nav').find('ul.dropdown').append(item);
-        } else {
-            item += '<li class="has-dropdown"><a href="#">Remembered searches</a><ul class="dropdown">';
-            item += '<li><a class="saved-search" href="javascript://">' + query['name'] + '</a>'
-            item += '<a href="javascript://" class="delete-search"><i class="foundicon-remove"></i></a></li>'
-            item += '</ul></li>';
-            $('#right-nav').prepend(item);
-        }
+        $('#remember i').attr('class', 'fa fa-star');
+
+        var item = '<li><a class="saved-search" href="#"><i class="fa fa-star"></i> ' + query['name'] + '</a></li>'
+        $('.saved-searches').append(item);
+
         $('.saved-search').each(function(r){
             if(typeof $._data(this, 'events') === 'undefined'){
                 $(this).on('click', load_remembered_search);
-            }
-        })
-        $('.delete-search').each(function(r){
-            if(typeof $._data(this, 'events') === 'undefined'){
-                $(this).on('click', delete_search);
             }
         })
     }
@@ -464,7 +430,7 @@
 
     function load_remembered_search(e){
         $('#map').spin('large');
-        var name = $(e.target).text();
+        var name = $(e.target).text().trim();
         var cookie_val = $.parseJSON($.cookie('crimearound_us'));
         var query = null;
         $.each(cookie_val, function(i, val){
@@ -516,10 +482,6 @@
 
     function get_results(query){
         return $.getJSON(endpoint + '/api/crime/', query)
-    }
-
-    function resize_junk(){
-        $('.full-height').height(window.innerHeight - 45);
     }
 
     function update_date_range(){
