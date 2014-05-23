@@ -208,7 +208,7 @@
         $('.start').val(moment().subtract('d', 9).format('MM/DD/YYYY'));
         $('.end').val(moment().subtract('d', 8).format('MM/DD/YYYY'));
         $.getJSON('js/beats.json?2', function(resp){
-            var beat_select = "<select id='police-beat' data-placeholder='Police Beat ...' class='chosen-select' multiple>";
+            var beat_select = "<select id='police-beat' data-placeholder='All police beats' class='chosen-select form-control' multiple>";
             var keys = [];
             for (k in resp){
                 if (resp.hasOwnProperty(k)){

@@ -28,7 +28,6 @@
   <body>
 
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-      <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
             <span class="sr-only">Toggle navigation</span>
@@ -44,39 +43,39 @@
             <li><a href="/help.html"><i class="fa fa-question-circle"></i> Help</a></li>
           </ul>
         </div><!--/.nav-collapse -->
-      </div>
     </div>
 
-    <div class="container">
-        <div class='row'>
-            <div class='col-md-4'>
-                <div id="mapinfo">
-                    <h4 class="light">Search crime in your area</h4>
-                    <p>Draw on the map or <a href='/help.html'>use the filters below</a>.</p>
-                    <hr />
-                    <div id="filters">
-                        <form class='form'>
-                            <h4><i class="fa fa-calendar-o"></i> Date &amp; time</h4>
-                            <div class="date-wrapper">
-                                <label for="start">Start Date</label>
-                                <input id="start" class="date-filter start" type="text" placeholder="Start Date"/>
-                            </div>
-                            <div class="date-wrapper">
-                                <label for="end">End Date</label>
-                                <input id="end" class="date-filter end" type="text" placeholder="End Date"/>
-                            </div>
-                            <p>
-                            Hour of day:
+    
+    <div class='row'>
+        <div class='col-md-4'>
+            <div id="mapinfo">
+                <h4 class="light">Search crime in your area</h4>
+                <p>Draw on the map or <a href='/help.html'>use the filters below</a>.</p>
+                <hr />
+
+                <div id="filters">
+                    <form role="form">
+                        <div class="form-group col-sm-6">
+                            <label for="start">Start date</label>
+                            <input id="start" class="date-filter start form-control" type="text" placeholder="Start date"/>
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label for="end">End date</label>
+                            <input id="end" class="date-filter end form-control" type="text" placeholder="End eate"/>
+                        </div>
+                        <div class="form-group col-sm-10">
+                            <label for="time-slider">Hour of day:</label>
                             <span>
                                 <span id="time-start" data-value="0">12am</span>
                                 —
                                 <span id="time-end" data-value="23">11pm</span>
                             </span>
                             <div id="time-slider"></div>
-                            </p>
+                        </div>
 
-                            <h4>Crime type</h4>
-                            <select id="crime-type" data-placeholder="All crime types" class="chosen-select" multiple>
+                        <div class="form-group col-sm-12">
+                            <label for="crime-type">Crime type</label><br />
+                            <select id="crime-type" data-placeholder="All crime types" class="chosen-select form-control" multiple>
                                 <option value=""></option>
                                 <optgroup label="Violent">
                                     <option value="ASSAULT">Assault</option>
@@ -116,71 +115,76 @@
                                     <option value="WEAPONS VIOLATION">Weapons violation</option>
                                 </optgroup>
                             </select>
+                        </div>
 
-                            <div id="beat-filters">
-                                <h4>Location description</h4>
-                                <select id="crime-location" data-placeholder="All location descriptions" class="chosen-select" multiple>
-                                    <option value="airport">Airport</option>
-                                    <option value="business_banking">Business - Banking</option>
-                                    <option value="business_eatery">Business - Eatery</option>
-                                    <option value="business_hotel_motel">Business - Hotel/Motel</option>
-                                    <option value="business_liquor">Business - Liquor</option>
-                                    <option value="business_office">Business - Office</option>
-                                    <option value="business_retail">Business - Retail</option>
-                                    <option value="cha">Chicago Housing Authority Property</option>
-                                    <option value="cta">Chicago Transit Authority Property</option>
-                                    <option value="gov">Government Property</option>
-                                    <option value="hospital">Hospital/Nursing Home</option>
-                                    <option value="library">Library</option>
-                                    <option value="indoors_residence">Indoors - Residence</option>
-                                    <option value="other">Other</option>
-                                    <option value="outdoors_public">Outdoors - Public</option>
-                                    <option value="outdoors_residence">Outdoors - Residence</option>
-                                    <option value="worship">Place of Worship</option>
-                                    <option value="school">School</option>
-                                    <option value="transportation">Transportation</option>
-                                    <option value="vacant">Vacant Property</option>
-                                    <option value="vehicle">Vehicle</option>
-                                </select>
-                                <br /><br />
-                            </div>
-                            <p>
-                                <a href="javascript://" id="submit-query" class="btn btn-primary">Search</a>
-                                <a href="javascript://" id="reset" class="btn btn-default">Reset</a>
-                            </p>
-                            <p>
-                                <span id="remember" class="light" style="display:none;">
-                                    <i class="fa fa-save"></i>
-                                    <a href="javascript://">Remember search</a>
-                                </span>
-                                <span id="report" class="light" style="display:none;">
-                                    |
-                                    <i class="fa fa-download"></i>
-                                    <a href="javascript://">Download</a>
-                                </span>
-                                <span id="print" class="light" style="display:none;">
-                                    |
-                                    <i class="fa fa-print"></i>
-                                    <a href="javascript://">Print</a>
-                                </span>
-                            </p>
-                          </ul>
-                        </form>
-                    </div>
-                    <hr />
-                    <div id="meta">
-                      <p>
-                        &copy; <a href='http://www.lisc-chicago.org'>LISC Chicago</a> and <a href='http://datamade.us'>DataMade</a><br />
-                        Hosted by <a href="http://www.smartchicagocollaborative.org/">Smart Chicago Collaborative</a>
-                        </p>
-                    </div>
+                        <div class="form-group col-sm-12">
+                            <label for='crime-location'>Location description</label>
+                            <select id="crime-location" data-placeholder="All location descriptions" class="chosen-select form-control" multiple>
+                                <option value="airport">Airport</option>
+                                <option value="business_banking">Business - Banking</option>
+                                <option value="business_eatery">Business - Eatery</option>
+                                <option value="business_hotel_motel">Business - Hotel/Motel</option>
+                                <option value="business_liquor">Business - Liquor</option>
+                                <option value="business_office">Business - Office</option>
+                                <option value="business_retail">Business - Retail</option>
+                                <option value="cha">Chicago Housing Authority Property</option>
+                                <option value="cta">Chicago Transit Authority Property</option>
+                                <option value="gov">Government Property</option>
+                                <option value="hospital">Hospital/Nursing Home</option>
+                                <option value="library">Library</option>
+                                <option value="indoors_residence">Indoors - Residence</option>
+                                <option value="other">Other</option>
+                                <option value="outdoors_public">Outdoors - Public</option>
+                                <option value="outdoors_residence">Outdoors - Residence</option>
+                                <option value="worship">Place of Worship</option>
+                                <option value="school">School</option>
+                                <option value="transportation">Transportation</option>
+                                <option value="vacant">Vacant Property</option>
+                                <option value="vehicle">Vehicle</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group col-sm-12">
+                            <label for='police-beat'>Police beat</label>  
+                            <div id="beat-filters"></div>
+                        </div>
+                        
+                        <div class='form-group col-sm-12'>
+                            <a id="submit-query" class="btn btn-primary">Search</a>
+                            <a id="reset" class="btn btn-default">Reset</a>
+                        </div>
+                        <div class='form-group col-sm-12'>
+                            <span id="remember" class="light" style="display:none;">
+                                <i class="fa fa-save"></i>
+                                <a href="javascript://">Remember search</a>
+                            </span>
+                            <span id="report" class="light" style="display:none;">
+                                |
+                                <i class="fa fa-download"></i>
+                                <a href="javascript://">Download</a>
+                            </span>
+                            <span id="print" class="light" style="display:none;">
+                                |
+                                <i class="fa fa-print"></i>
+                                <a href="javascript://">Print</a>
+                            </span>
+                        </div>
+                    </form>
                 </div>
+                <hr />
+                <div class='clearfix'></div>
+                <p>
+                    &copy; <a href='http://www.lisc-chicago.org'>LISC Chicago</a> and <a href='http://datamade.us'>DataMade</a><br />
+                    Hosted by <a href="http://www.smartchicagocollaborative.org/">Smart Chicago Collaborative</a>
+                </p>
+                
             </div>
-        <div class='col-md-8'>
-            <div id="map" class="nine columns full-height"></div>
         </div>
-      </div>
+    <div class='col-md-8'>
+        <div id="map" class="nine columns full-height"></div>
     </div>
+  </div>
+    
         <!-- <div id="report-modal" class="reveal-modal small">
             <h2 class="light">Oops, slight problem</h2>
             <p class="lead">You need to give me something to work with</p>

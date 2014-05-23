@@ -146,6 +146,8 @@ ul.chosen-choices li input {
 .ui-slider {
   position: relative;
   text-align: left;
+  margin-left: 8px;
+  margin-top: 10px;
 }
 .ui-slider .ui-slider-handle {
   position: absolute;
@@ -267,3 +269,4 @@ ul.chosen-choices li input {
     right: 26px;
     left: inherit;
 }
+
