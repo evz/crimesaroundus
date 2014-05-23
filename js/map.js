@@ -5,6 +5,13 @@
     var map;
     var meta = L.control({position: 'bottomright'});
     var meta_data;
+
+    var colors = [
+       '#e41a1c',
+       '#377eb8',
+       '#4daf4a',
+       '#984ea3'
+    ];
     meta.onAdd = function(map){
         this._div = L.DomUtil.create('div', 'meta');
         return this._div;
@@ -18,8 +25,9 @@
             meta.removeFrom(map);
         }
     }
-    //var endpoint = 'http://localhost:7777';
-    var endpoint = 'http://crime-weather.smartchicagoapps.org';
+    var endpoint = 'http://api.crimearound.us';
+    //var endpoint = 'http://crime-weather.smartchicagoapps.org';
+    //var endpoint = 'http://127.0.0.1:5000';
     var AddressSearch = L.Control.extend({
         options: {
             position: 'topleft',
@@ -147,12 +155,11 @@
             end = moment(end)
             start = start.startOf('day').unix();
             end = end.endOf('day').unix();
-            query['date__lte'] = end;
-            query['date__gte'] = start;
+            query['obs_date__le'] = end;
+            query['obs_date__ge'] = start;
             $.when(get_results(query)).then(
                 function(resp){
-                    add_resp_to_map(resp);
-                    window.location.hash = $.param(query);
+                    add_resp_to_map(query, resp);
                     if (crimes.getLayers().length > 0){
                         map.fitBounds(crimes.getBounds());
                     }
@@ -165,7 +172,7 @@
         window.onresize = function(event){
             resize_junk();
         }
-        map = L.mapbox.map('map', 'ericvanzanten.map-7b7muw9h', {attributionControl: false})
+        map = L.mapbox.map('map', 'datamade.hn83a654', {attributionControl: false})
             .fitBounds([[41.644286009999995, -87.94010087999999], [42.023134979999995, -87.52366115999999]]);
         map.addLayer(drawnItems);
         var drawControl = new L.Control.Draw({
@@ -178,6 +185,7 @@
                 marker: false
             }
         });
+        drawControl.setPosition('topright')
         map.addControl(drawControl);
         map.on('draw:created', draw_create);
         map.on('draw:edited', draw_edit);
@@ -188,67 +196,32 @@
             $('#map').spin('large');
             $.when(get_results(query)).then(
                 function(resp){
-                    $('#map').spin(false);
-                    var location = resp['meta']['query']['location'];
-                    if (typeof location !== 'undefined'){
-                        var shape_opts = {
-                            stroke: true,
-                            color: '#f06eaa',
-                            weight: 4,
-                            opacity: 0.5,
-                            fill: true,
-                            fillOpacity: 0.2,
-                            clickable: true
-                        }
-                        var geo = L.geoJson(location['$geoWithin']['$geometry'],{
-                            style: function(feature){
-                                return shape_opts;
-                            }
-                        });
-                        drawnItems.addLayer(geo);
-                    }
-                    var start = query['date__gte'];
-                    var end = query['date__lte'];
-                    $('.start').val(moment(start, 'X').format('MM/DD/YYYY'));
-                    $('.end').val(moment(end, 'X').format('MM/DD/YYYY'));
-                    if(typeof query['beat'] !== 'undefined'){
-                        $.each(query['beat'].split(','), function(i, beat){
-                            $('#police-beat').find('[value="' + beat + '"]').attr('selected', 'selected');
-                        });
-                        $('#police-beat').trigger('chosen:updated');
-                    }
-                    if(typeof query['primary_type'] !== 'undefined'){
-                        $.each(query['primary_type'].split(','), function(i, pt){
-                            $('#crime-type').find('[value="' + pt + '"]').attr('selected', 'selected');
-                        });
-                        $('#crime-type').trigger('chosen:updated');
-                    }
-                    if(typeof query['location_description'] !== 'undefined'){
-                        $.each(query['location_description'].split(','), function(i, loc){
-                            $('#crime-location').find('[value="' + loc + '"]').attr('selected', 'selected');
-                        });
-                        $('#crime-location').trigger('chosen:updated');
-                    }
-                    if (typeof resp.meta.query.beat !== 'undefined'){
-                        add_beats(resp.meta.query.beat['$in']);
-                    }
-                    add_resp_to_map(resp);
-                    if (crimes.getLayers().length > 0){
-                        map.fitBounds(crimes.getBounds());
-                    }
-                    crimes.bringToFront();
-                    beats.bringToBack();
+                    reload_state(query, resp);
                 }
             ).fail();
         } else {
             map.fitBounds([[41.644286009999995, -87.94010087999999], [42.023134979999995, -87.52366115999999]]);
         }
-        map.addControl(new AddressSearch());
-        $('.start').val(moment().subtract('d', 14).format('MM/DD/YYYY'));
-        $('.end').val(moment().subtract('d', 7).format('MM/DD/YYYY'));
-        $.getJSON('js/beats.json', function(resp){
+
+
+        map.addControl(new AddressSearch().setPosition('topright'));
+        $('.start').val(moment().subtract('d', 9).format('MM/DD/YYYY'));
+        $('.end').val(moment().subtract('d', 8).format('MM/DD/YYYY'));
+        $.getJSON('js/beats.json?2', function(resp){
             var beat_select = "<select id='police-beat' data-placeholder='Police Beat ...' class='chosen-select' multiple>";
-            $.each(resp, function(district, beats){
+            var keys = [];
+            for (k in resp){
+                if (resp.hasOwnProperty(k)){
+                    keys.push(k)
+                }
+            }
+            keys.sort();
+            sorted_resp = {};
+            for (i = 0; i < keys.length; i++){
+                var k = keys[i];
+                sorted_resp[k] = resp[k];
+            }
+            $.each(sorted_resp, function(district, beats){
                 beat_select += "<optgroup label='" + district + "'>";
                 $.each(beats, function(i, beat){
                     beat_select += "<option value='" + beat + "'>" + beat + "</option>";
@@ -266,14 +239,57 @@
                 e.preventDefault();
                 window.location.hash = '';
                 window.location.reload();
-            })
+            });
         })
-        $('.filter').datepicker({
+        $('.date-filter').datepicker({
             dayNamesMin: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
             prevText: '',
             nextText: ''
         });
+        $('#time-slider').slider({
+            orientation: "horizontal",
+            range: true,
+            min: 0,
+            max: 23,
+            values: [0,23],
+            slide: function(event, ui){
+                var s = ui.values[0]
+                var e = ui.values[1]
+                var start = convertTime(s);
+                var end = convertTime(e);
+                $('#time-start').html(start);
+                $('#time-end').html(end);
+                $('#time-start').data('value', s);
+                $('#time-end').data('value', e);
+            }
+        });
+        if (typeof $.cookie('crimearound_us') === 'undefined'){
+            $.cookie('crimearound_us', JSON.stringify([]), {
+                json: true,
+                expires: 365
+            });
+        } else {
+            var saves = $.cookie('crimearound_us');
+            saves = $.parseJSON(saves);
+            if (saves.length > 0){
+                var item = '<li class="has-dropdown"><a href="#">Remembered searches</a><ul class="dropdown saved-searches">';
+                $.each(saves, function(i, save){
+                    item += '<li><a class="saved-search" href="javascript://">' + save.name + '</a>'
+                    item += '<a href="javascript://" class="delete-search"><i class="foundicon-remove"></i></a></li>'
+                })
+                item += '</ul></li>';
+                $('#right-nav').prepend(item);
+                $('.saved-search').on('click', load_remembered_search);
+                $('.delete-search').on('click', delete_search);
+            }
+        }
     });
+
+    function convertTime(time){
+        var meridian = time < 12 ? 'am' : 'pm';
+        var hour = time % 12 || 12;
+        return hour + meridian;
+    }
 
     function parseParams(query){
         var re = /([^&=]+)=?([^&]*)/g;
@@ -311,33 +327,12 @@
 
     function edit_create(){
         $('#map').spin('large')
-        var query = {};
+        var query = {'dataset_name': 'chicago_crimes_all'};
         var layers = drawnItems.getLayers();
         if (layers.length > 0){
             drawnItems.eachLayer(function(layer){
-                query['location__geoWithin'] = JSON.stringify(layer.toGeoJSON()['geometry']);
+                query['location_geom__within'] = JSON.stringify(layer.toGeoJSON());
             })
-        }
-        var start = $('.start').val().replace('Start Date: ', '');
-        var end = $('.end').val().replace('End Date: ', '');
-        start = moment(start)
-        end = moment(end)
-        var valid = false;
-        if (start.isValid() && end.isValid()){
-            start = start.startOf('day').unix();
-            end = end.endOf('day').unix();
-            valid = true;
-        }
-        query['date__lte'] = end;
-        query['date__gte'] = start;
-        if($('#crime-type').val()){
-            var types = []
-            $.each($('#crime-type').val(), function(i, type){
-                types.push(type);
-            });
-            if(types.length > 0){
-                query['primary_type'] = types.join(',');
-            }
         }
         if ($('#crime-location').val()){
             var locations = [];
@@ -345,40 +340,54 @@
                 locations.push(location);
             });
             if(locations.length > 0){
-                query['location_description'] = locations.join(',');
+                query['locations'] = locations.join(',');
+            }
+        }
+        var start = $('.start').val().replace('Start Date: ', '');
+        var end = $('.end').val().replace('End Date: ', '');
+        start = moment(start)
+        end = moment(end)
+        var date_valid = false;
+        if (start.isValid() && end.isValid()){
+            start = start.format('YYYY/MM/DD');
+            end = end.format('YYYY/MM/DD');
+            date_valid = true;
+        }
+        query['obs_date__le'] = end;
+        query['obs_date__ge'] = start;
+        var time_start = $('#time-start').data('value');
+        var time_end = $('#time-end').data('value');
+        query['orig_date__time_of_day_ge'] = time_start;
+        query['orig_date__time_of_day_le'] = time_end;
+        if($('#crime-type').val()){
+            var types = []
+            $.each($('#crime-type').val(), function(i, type){
+                types.push(type);
+            });
+            if(types.length > 0){
+                query['primary_type__in'] = types.join(',');
             }
         }
         if ($('#police-beat').val()){
-            var beats = [];
+            var bts = [];
             $.each($('#police-beat').val(), function(i, beat){
-                beats.push(beat);
+                bts.push(beat);
             });
-            if(beats.length > 0){
-                query['beat'] = beats.join(',');
+            if(bts.length > 0){
+                query['beat__in'] = bts.join(',');
             }
         }
-        var time_checkboxes = $('.filter.time');
-        var on = [];
-        $.each(time_checkboxes, function(i, checkbox){
-            if($(checkbox).is(':checked')){
-                on.push($(checkbox).attr('value'));
-            }
-        });
-        if (on.length > 0){
-            query['time'] = on.join(',');
-        }
-        if(valid){
+        if(date_valid){
             $.when(get_results(query)).then(function(resp){
-                if (typeof resp.meta.query.beat !== 'undefined'){
-                    add_beats(resp.meta.query.beat['$in']);
+                if (typeof query.beat__in !== 'undefined'){
+                    add_beats(query.beat__in.split(','));
                 }
-                add_resp_to_map(resp);
-                window.location.hash = $.param(query);
-                if (crimes.getLayers().length > 0){
+                add_resp_to_map(query, resp);
+                if (beats.getLayers().length > 0){
+                    map.fitBounds(beats.getBounds());
+                } else if (crimes.getLayers().length > 0){
                     map.fitBounds(crimes.getBounds());
                 }
-                crimes.bringToFront();
-                beats.bringToBack();
             }).fail(function(data){
                 console.log(data);
             })
@@ -392,18 +401,26 @@
         beats.clearLayers();
         $.each(b, function(i, beat){
             $.getJSON('/data/beats/' + beat + '.geojson', function(geo){
-                beats.addLayer(L.geoJson(geo)).addTo(map);
+                beats.addLayer(L.geoJson(geo, {
+                    style: function(){
+                        return {
+                            stroke: true,
+                            color: '#7B3294',
+                            weight: 4,
+                            opacity: 0.9,
+                            fill: false
+                        }
+                    }
+                }))
             })
         });
-        beats.bringToBack()
+        map.addLayer(beats, true);
     }
 
-    function add_resp_to_map(resp){
-        if(crimes.getLayers().length > 0){
-            crimes.clearLayers();
-        }
+    function add_resp_to_map(query, resp){
+        crimes.clearLayers();
         var marker_opts = {
-            radius: 10,
+            radius: 8,
             weight: 2,
             opacity: 1,
             fillOpacity: 0.6
@@ -415,32 +432,188 @@
         }
         meta.addTo(map);
         meta.update(meta_data);
+        var geo = []
         $.each(resp.results, function(i, result){
-            var location = result.location;
-            location.properties = result;
-            crimes.addLayer(L.geoJson(location, {
-                pointToLayer: function(feature, latlng){
-                    if (feature.properties.type == 'violent'){
-                        marker_opts.color = '#7B3294';
-                        marker_opts.fillColor = '#7B3294';
-                    } else if (feature.properties.type == 'property'){
-                        marker_opts.color = '#ca0020';
-                        marker_opts.fillColor = '#ca0020';
-                    } else {
-                        marker_opts.color = '#008837';
-                        marker_opts.fillColor = '#008837';
-                    }
-                    return L.circleMarker(latlng, marker_opts)
-                },
-                onEachFeature: bind_popup
-            })).addTo(map);
+            if (result.latitude && result.longitude){
+                result.location.properties = result;
+                crimes.addLayer(L.geoJson(result.location, {
+                    pointToLayer: function(feature, latlng){
+                        var crime_type = feature.properties.crime_type
+                        if (crime_type == 'violent'){
+                            marker_opts.color = colors[3];
+                            marker_opts.fillColor = colors[3];
+                        } else if (crime_type == 'property'){
+                            marker_opts.color = colors[0];
+                            marker_opts.fillColor = colors[0];
+                        } else if (crime_type == 'quality'){
+                            marker_opts.color = colors[2];
+                            marker_opts.fillColor = colors[2];
+                        } else {
+                            marker_opts.color = colors[1];
+                            marker_opts.fillColor = colors[1];
+                        }
+                        var jitter = 0.0001;
+                        var ll = [latlng.lat + (Math.random() * jitter), latlng.lng - (Math.random() * jitter)]
+                        return L.circleMarker(ll, marker_opts)
+                    },
+                    onEachFeature: bind_popup
+                }));
+            }
         });
-        if ($('#report').length > 0){
-            $('#report').remove();
+        map.addLayer(crimes);
+        $('#report').show();
+        $('#report').each(function(r){
+            if(typeof $._data(this, 'events') === 'undefined'){
+                $('#report').on('click', get_report);
+            }
+        })
+        $('#remember').show();
+        $('#remember').each(function(r){
+            if(typeof $._data(this, 'events') === 'undefined'){
+                $('#remember').on('click', remember_search);
+            }
+        })
+
+        $('#print').show();
+        $('#print').each(function(r){
+            if(typeof $._data(this, 'events') === 'undefined'){
+                $('#print').on('click', print);
+            }
+        })
+        window.location.hash = $.param(query);
+    }
+
+    function reload_state(query, resp){
+        $('#map').spin(false);
+        var location = resp['meta']['query']['location__within'];
+        if (typeof location !== 'undefined'){
+            var shape_opts = {
+                stroke: true,
+                color: '#f06eaa',
+                weight: 4,
+                opacity: 0.5,
+                fill: true,
+                fillOpacity: 0.2,
+                clickable: true
+            }
+            var geo = L.geoJson(location,{
+                style: function(feature){
+                    return shape_opts;
+                }
+            });
+            drawnItems.addLayer(geo);
         }
-        var report = '<button id="report" class="button radius success">Download Report</button>'
-        $('#form-controls').after(report);
-        $('#report').on('click', get_report);
+        var start = query['obs_date__ge'];
+        var end = query['obs_date__le'];
+        $('.start').val(moment(start).format('MM/DD/YYYY'));
+        $('.end').val(moment(end).format('MM/DD/YYYY'));
+        if(typeof query['beat__in'] !== 'undefined'){
+            $.each(query['beat__in'].split(','), function(i, beat){
+                $('#police-beat').find('[value="' + beat + '"]').attr('selected', 'selected');
+            });
+            $('#police-beat').trigger('chosen:updated');
+        }
+        if(typeof query['primary_type__in'] !== 'undefined'){
+            $.each(query['primary_type__in'].split(','), function(i, pt){
+                $('#crime-type').find('[value="' + pt + '"]').attr('selected', 'selected');
+            });
+            $('#crime-type').trigger('chosen:updated');
+        }
+        if(typeof query['location_description'] !== 'undefined'){
+            $.each(query['location_description'].split(','), function(i, loc){
+                $('#crime-location').find('[value="' + loc + '"]').attr('selected', 'selected');
+            });
+            $('#crime-location').trigger('chosen:updated');
+        }
+        if(typeof query['orig_date__time_of_day_le'] !== 'undefined'){
+            var s = query['orig_date__time_of_day_ge'];
+            var e = query['orig_date__time_of_day_le'];
+            var start = convertTime(s);
+            var end = convertTime(e);
+            $('#time-start').html(start);
+            $('#time-end').html(end);
+            $('#time-start').data('value', s);
+            $('#time-end').data('value', e);
+            $('#time-slider').slider('values', 0, s);
+            $('#time-slider').slider('values', 1, e);
+        }
+        if (typeof query['beat__in'] !== 'undefined'){
+            add_beats(query['beat__in'].split(','));
+        }
+        add_resp_to_map(query, resp);
+        if (beats.getLayers().length > 0){
+            map.fitBounds(beats.getBounds());
+        } else if (crimes.getLayers().length > 0){
+            map.fitBounds(crimes.getBounds());
+        }
+    }
+
+    function remember_search(){
+        var hash = window.location.hash.slice(1,window.location.hash.length);
+        var query = parseParams(hash);
+        query['name'] = moment().format('MMM D, YYYY h:mm:ssa')
+        var cookie_val = $.parseJSON($.cookie('crimearound_us'));
+        cookie_val.push(query);
+        $.cookie('crimearound_us', JSON.stringify(cookie_val));
+        if($('#remember').find('i.foundicon-checkmark').length > 0){
+            $('#remember i.foundicon-checkmark').hide(500);
+            $('#remember i.foundicon-checkmark').remove();
+        }
+        $('#remember').append('<i class="foundicon-checkmark" style="display:none; color:#008837;"> </i>');
+        $('#remember i.foundicon-checkmark').show(500);
+        var item = '';
+        if($('#right-nav').find('ul.dropdown').length > 0){
+            item += '<li><a class="saved-search" href="javascript://">' + query['name'] + '</a>'
+            item += '<a href="javascript://" class="delete-search"><i class="foundicon-remove"></i></a></li>'
+            $('#right-nav').find('ul.dropdown').append(item);
+        } else {
+            item += '<li class="has-dropdown"><a href="#">Remembered searches</a><ul class="dropdown">';
+            item += '<li><a class="saved-search" href="javascript://">' + query['name'] + '</a>'
+            item += '<a href="javascript://" class="delete-search"><i class="foundicon-remove"></i></a></li>'
+            item += '</ul></li>';
+            $('#right-nav').prepend(item);
+        }
+        $('.saved-search').each(function(r){
+            if(typeof $._data(this, 'events') === 'undefined'){
+                $(this).on('click', load_remembered_search);
+            }
+        })
+        $('.delete-search').each(function(r){
+            if(typeof $._data(this, 'events') === 'undefined'){
+                $(this).on('click', delete_search);
+            }
+        })
+    }
+
+    function delete_search(e){
+        var name = $(e.currentTarget).prev().text();
+        var cookie_val = $.parseJSON($.cookie('crimearound_us'));
+        var new_cookie = []
+        $.each(cookie_val, function(i, val){
+            if(val.name != name){
+                new_cookie.push(val);
+            }
+        })
+        $.cookie('crimearound_us', JSON.stringify(new_cookie));
+        $(e.currentTarget).parent().remove();
+    }
+
+    function load_remembered_search(e){
+        $('#map').spin('large');
+        var name = $(e.target).text();
+        var cookie_val = $.parseJSON($.cookie('crimearound_us'));
+        var query = null;
+        $.each(cookie_val, function(i, val){
+            if(val.name == name){
+                query = val;
+            }
+        });
+        delete query['name'];
+        $.when(get_results(query)).then(
+            function(resp){
+                reload_state(query, resp);
+            }
+        ).fail();
     }
 
     function bind_popup(feature, layer){
@@ -457,28 +630,31 @@
         e.preventDefault();
         var query = JSON.stringify(meta_data.query);
         if (typeof query !== 'undefined'){
-            $.fileDownload(endpoint + '/api/report/?query=' + query, {
-                successCallback: function(url){
-                },
-                errorCallback: function(html, url){
-                }
-            })
+            window.location = endpoint + '/api/report/?query=' + query;
+        } else {
+            $('#report-modal').reveal()
+        }
+    }
+
+    function print(e){
+        e.preventDefault();
+        if (typeof meta_data.query !== 'undefined'){
+            var query = {'query': meta_data.query}
+            query['center'] = [map.getCenter().lng, map.getCenter().lat];
+            query['dimensions'] = [map.getSize().x, map.getSize().y];
+            query['zoom'] = map.getZoom();
+            query = JSON.stringify(query);
+            window.location = endpoint + '/api/print/?query=' + query;
         } else {
             $('#report-modal').reveal()
         }
     }
 
     function get_results(query){
-        return $.ajax({
-            url: endpoint + '/api/crime/',
-            dataType: 'jsonp',
-            data: query,
-        })
+        return $.getJSON(endpoint + '/api/crime/', query)
     }
 
     function resize_junk(){
         $('.full-height').height(window.innerHeight - 45);
-        //var offset = $('#overlay-top').height() + $('#crime-title').height() + 75;
-        //$('.hide-overflow').height(window.innerHeight - offset);
     }
 })()
