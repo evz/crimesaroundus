@@ -13,6 +13,7 @@
 
     <!-- Bootstrap core CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/daterangepicker-bs3.css" rel="stylesheet">
     <link href="/css/chosen.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
@@ -55,13 +56,9 @@
 
                 <div id="filters">
                     <form role="form">
-                        <div class="form-group col-sm-6">
-                            <label for="start">Start date</label>
-                            <input id="start" class="date-filter start form-control" type="text" placeholder="Start date"/>
-                        </div>
-                        <div class="form-group col-sm-6">
-                            <label for="end">End date</label>
-                            <input id="end" class="date-filter end form-control" type="text" placeholder="End eate"/>
+                        <div class="form-group col-sm-12">
+                            <label for="start">Date range</label>
+                            <input id="date_range" class="date-filter start form-control" type="text"/>
                         </div>
                         <div class="form-group col-sm-10">
                             <label for="time-slider">Hour of day:</label>
@@ -223,16 +220,17 @@
 
         <script src="/js/jquery.min.js"></script>
         <script src="/js/bootstrap.min.js"></script>
+        <script src="/js/moment.min.js"></script>
         <script src="/js/jquery-ui.min.js"></script>
+        <script src="/js/daterangepicker.js"></script>
         <script src="/js/jquery.cookie.js"></script>
         <script src="/js/chosen.jquery.min.js"></script>
         <script src="/js/ejs_production.js"></script>
-        <script src="/js/moment.min.js"></script>
         <script src="/js/spin.min.js"></script>
         <script src="/js/jquery.spin.js"></script>
         <script src="/js/jquery.fileDownload.js"></script>
         <script src="/js/map.js?2"></script>
         <script src="/js/jquery.ba-hashchange.js"></script>
-        <script src="/js/analytics_lib.js"></script>
+        <!-- <script src="/js/analytics_lib.js"></script> -->
     </body>
 </html>

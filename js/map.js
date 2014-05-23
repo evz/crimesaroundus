@@ -5,6 +5,12 @@
     var map;
     var meta = L.control({position: 'bottomright'});
     var meta_data;
+    var start_date
+    var end_date;
+
+    var endpoint = 'http://api.crimearound.us';
+    //var endpoint = 'http://crime-weather.smartchicagoapps.org';
+    //var endpoint = 'http://127.0.0.1:5000';
 
     var colors = [
        '#e41a1c',
@@ -25,265 +31,132 @@
             meta.removeFrom(map);
         }
     }
-    var endpoint = 'http://api.crimearound.us';
-    //var endpoint = 'http://crime-weather.smartchicagoapps.org';
-    //var endpoint = 'http://127.0.0.1:5000';
-    var AddressSearch = L.Control.extend({
-        options: {
-            position: 'topleft',
-            keepOpen: false,
+
+    $('.full-height').height(window.innerHeight - 45);
+    window.onresize = function(event){
+        resize_junk();
+    }
+    map = L.mapbox.map('map', 'datamade.hn83a654', {attributionControl: false})
+        .fitBounds([[41.644286009999995, -87.94010087999999], [42.023134979999995, -87.52366115999999]]);
+    map.addLayer(drawnItems);
+    var drawControl = new L.Control.Draw({
+        edit: {
+                featureGroup: drawnItems
         },
-        _toggle: function(e) {
-            if (e) L.DomEvent.stop(e);
-            if (L.DomUtil.hasClass(this._container, 'active')) {
-                L.DomUtil.removeClass(this._container, 'active');
-                this._results.innerHTML = '';
-                this._input.blur();
-            } else {
-                L.DomUtil.addClass(this._container, 'active');
-                this._input.focus();
-                this._input.select();
-            }
-        },
-        _closeIfOpen: function(e) {
-            if (L.DomUtil.hasClass(this._container, 'active') &&
-                !this.options.keepOpen) {
-                L.DomUtil.removeClass(this._container, 'active');
-                this._results.innerHTML = '';
-                this._input.blur();
-            }
-        },
-        onAdd: function(map) {
-            var container = L.DomUtil.create('div', 'leaflet-control-mapbox-geocoder leaflet-bar leaflet-control'),
-                link = L.DomUtil.create('a', 'leaflet-control-mapbox-geocoder-toggle mapbox-icon mapbox-icon-geocoder', container),
-                results = L.DomUtil.create('div', 'leaflet-control-mapbox-geocoder-results', container),
-                wrap = L.DomUtil.create('div', 'leaflet-control-mapbox-geocoder-wrap', container),
-                form = L.DomUtil.create('form', 'leaflet-control-mapbox-geocoder-form', wrap),
-                input  = L.DomUtil.create('input', '', form);
-
-            link.href = '#';
-            link.innerHTML = '&nbsp;';
-
-            input.type = 'text';
-            input.setAttribute('placeholder', 'Search');
-
-            L.DomEvent.addListener(form, 'submit', this._geocode, this);
-            L.DomEvent.disableClickPropagation(container);
-
-            this._map = map;
-            this._input = input;
-            this._form = form;
-            this._results = results;
-
-            if (this.options.keepOpen) {
-                L.DomUtil.addClass(container, 'active');
-            } else {
-                this._map.on('click', this._closeIfOpen, this);
-                L.DomEvent.addListener(link, 'click', this._toggle, this);
-            }
-            return container;
-        },
-        _geocode: function(e){
-            L.DomEvent.preventDefault(e);
-            L.DomUtil.addClass(this._container, 'searching');
-            var map = this._map;
-            var container = this._container;
-            var results = this._results;
-            var self = this;
-            var onload = L.bind(function(resp, err){
-                L.DomUtil.removeClass(container, 'searching');
-                results.innerHTML = '';
-                var locations = resp.results[0].locations;
-                if (locations.length === 1){
-                    var latlng = [locations[0].latLng.lat, locations[0].latLng.lng];
-                    map.setView(latlng, 17);
-                    var mark = L.marker(latlng)
-                    mark.addTo(map);
-                    //self._fetch_near(mark); //Add in the $near query
-                } else {
-                    for (var i = 0, l = Math.min(locations.length, 5); i < l; i++) {
-                        var name = [];
-                        if (locations[i].street) name.push(locations[i].street);
-                        if (!name.length) continue;
-
-                        var r = L.DomUtil.create('a', '', this._results);
-                        r.innerHTML = name.join(', ');
-                        r.href = '#';
-
-                        (L.bind(function(result) {
-                            L.DomEvent.addListener(r, 'click', function(e) {
-                                var lat = result.latLng.lat;
-                                var lng = result.latLng.lng;
-                                map.setView(L.latLng(lat, lng), 16);
-                                var mark = L.marker([lat,lng]);
-                                mark.addTo(map);
-                                L.DomEvent.stop(e);
-                                self._toggle();
-                                //self._fetch_near(mark);
-                                // add in the $near query
-                            }, this);
-                        }, this))(locations[i]);
-                    }
-                    if (resp.results.length > 5) {
-                        var outof = L.DomUtil.create('span', '', this._results);
-                        outof.innerHTML = 'Top 5 of ' + locations.length + '  results';
-                    }
-                }
-            }, this);
-            var query = this._input.value + ' Chicago, IL';
-            var bbox = "42.023134979999995,-87.52366115999999,41.644286009999995,-87.94010087999999";
-            var params = {
-                key: 'Fmjtd|luub2d0rn1,rw=o5-9u2ggw',
-                location: query,
-                boundingBox: bbox
-            }
-            $.ajax({
-                url:'http://open.mapquestapi.com/geocoding/v1/address',
-                data: params,
-                dataType: 'jsonp',
-                success: onload
-            });
-        },
-        _fetch_near: function(point){
-            var geo = point.toGeoJSON()['geometry'];
-            var query = {};
-            query['location__nearSphere'] = JSON.stringify(geo);
-            query['maxDistance'] = 500;
-            var start = $('.start').val().replace('Start Date: ', '');
-            var end = $('.end').val().replace('End Date: ', '');
-            start = moment(start)
-            end = moment(end)
-            start = start.startOf('day').unix();
-            end = end.endOf('day').unix();
-            query['obs_date__le'] = end;
-            query['obs_date__ge'] = start;
-            $.when(get_results(query)).then(
-                function(resp){
-                    add_resp_to_map(query, resp);
-                    if (crimes.getLayers().length > 0){
-                        map.fitBounds(crimes.getBounds());
-                    }
-                }
-            )
+        draw: {
+            polyline: false,
+            circle: false,
+            marker: false
         }
     });
-    $(document).ready(function(){
-        $('.full-height').height(window.innerHeight - 45);
-        window.onresize = function(event){
-            resize_junk();
-        }
-        map = L.mapbox.map('map', 'datamade.hn83a654', {attributionControl: false})
-            .fitBounds([[41.644286009999995, -87.94010087999999], [42.023134979999995, -87.52366115999999]]);
-        map.addLayer(drawnItems);
-        var drawControl = new L.Control.Draw({
-            edit: {
-                    featureGroup: drawnItems
-            },
-            draw: {
-                polyline: false,
-                circle: false,
-                marker: false
+    drawControl.setPosition('topright')
+    map.addControl(drawControl);
+    map.on('draw:created', draw_create);
+    map.on('draw:edited', draw_edit);
+    map.on('draw:deleted', draw_delete);
+    if(window.location.hash){
+        var hash = window.location.hash.slice(1,window.location.hash.length);
+        var query = parseParams(hash);
+        $('#map').spin('large');
+        $.when(get_results(query)).then(
+            function(resp){
+                reload_state(query, resp);
             }
-        });
-        drawControl.setPosition('topright')
-        map.addControl(drawControl);
-        map.on('draw:created', draw_create);
-        map.on('draw:edited', draw_edit);
-        map.on('draw:deleted', draw_delete);
-        if(window.location.hash){
-            var hash = window.location.hash.slice(1,window.location.hash.length);
-            var query = parseParams(hash);
-            $('#map').spin('large');
-            $.when(get_results(query)).then(
-                function(resp){
-                    reload_state(query, resp);
-                }
-            ).fail();
-        } else {
-            map.fitBounds([[41.644286009999995, -87.94010087999999], [42.023134979999995, -87.52366115999999]]);
-        }
+        ).fail();
+    } else {
+        map.fitBounds([[41.644286009999995, -87.94010087999999], [42.023134979999995, -87.52366115999999]]);
+    }
 
+    $.getJSON('/js/beats.json', function(resp){
+        var beat_select = "<select id='police-beat' data-placeholder='All police beats' class='chosen-select form-control' multiple>";
+        var keys = [];
+        for (k in resp){
+            if (resp.hasOwnProperty(k)){
+                keys.push(k)
+            }
+        }
+        keys.sort();
+        sorted_resp = {};
+        for (i = 0; i < keys.length; i++){
+            var k = keys[i];
+            sorted_resp[k] = resp[k];
+        }
+        $.each(sorted_resp, function(district, beats){
+            beat_select += "<optgroup label='" + district + "'>";
+            $.each(beats, function(i, beat){
+                beat_select += "<option value='" + beat + "'>" + beat + "</option>";
+            })
+            beat_select += "</optgroup>";
+        });
+        beat_select += "</select>";
+        $('#beat-filters').append(beat_select);
+        $('.chosen-select').chosen();
+        $('#submit-query').on('click', function(e){
+            e.preventDefault();
+            submit_search();
+        });
+        $('#reset').on('click', function(e){
+            e.preventDefault();
+            window.location.hash = '';
+            window.location.reload();
+        });
+    })
 
-        map.addControl(new AddressSearch().setPosition('topright'));
-        $('.start').val(moment().subtract('d', 9).format('MM/DD/YYYY'));
-        $('.end').val(moment().subtract('d', 8).format('MM/DD/YYYY'));
-        $.getJSON('js/beats.json?2', function(resp){
-            var beat_select = "<select id='police-beat' data-placeholder='All police beats' class='chosen-select form-control' multiple>";
-            var keys = [];
-            for (k in resp){
-                if (resp.hasOwnProperty(k)){
-                    keys.push(k)
-                }
-            }
-            keys.sort();
-            sorted_resp = {};
-            for (i = 0; i < keys.length; i++){
-                var k = keys[i];
-                sorted_resp[k] = resp[k];
-            }
-            $.each(sorted_resp, function(district, beats){
-                beat_select += "<optgroup label='" + district + "'>";
-                $.each(beats, function(i, beat){
-                    beat_select += "<option value='" + beat + "'>" + beat + "</option>";
-                })
-                beat_select += "</optgroup>";
-            });
-            beat_select += "</select>";
-            $('#beat-filters').append(beat_select);
-            $('.chosen-select').chosen();
-            $('#submit-query').on('click', function(e){
-                e.preventDefault();
-                edit_create();
-            });
-            $('#reset').on('click', function(e){
-                e.preventDefault();
-                window.location.hash = '';
-                window.location.reload();
-            });
-        })
-        $('.date-filter').datepicker({
-            dayNamesMin: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-            prevText: '',
-            nextText: ''
-        });
-        $('#time-slider').slider({
-            orientation: "horizontal",
-            range: true,
-            min: 0,
-            max: 23,
-            values: [0,23],
-            slide: function(event, ui){
-                var s = ui.values[0]
-                var e = ui.values[1]
-                var start = convertTime(s);
-                var end = convertTime(e);
-                $('#time-start').html(start);
-                $('#time-end').html(end);
-                $('#time-start').data('value', s);
-                $('#time-end').data('value', e);
-            }
-        });
-        if (typeof $.cookie('crimearound_us') === 'undefined'){
-            $.cookie('crimearound_us', JSON.stringify([]), {
-                json: true,
-                expires: 365
-            });
-        } else {
-            var saves = $.cookie('crimearound_us');
-            saves = $.parseJSON(saves);
-            if (saves.length > 0){
-                var item = '<li class="has-dropdown"><a href="#">Remembered searches</a><ul class="dropdown saved-searches">';
-                $.each(saves, function(i, save){
-                    item += '<li><a class="saved-search" href="javascript://">' + save.name + '</a>'
-                    item += '<a href="javascript://" class="delete-search"><i class="foundicon-remove"></i></a></li>'
-                })
-                item += '</ul></li>';
-                $('#right-nav').prepend(item);
-                $('.saved-search').on('click', load_remembered_search);
-                $('.delete-search').on('click', delete_search);
-            }
+    start_date = moment().subtract('d', 9);
+    end_date = moment().subtract('d', 8);
+    $('#date_range').daterangepicker(
+      { 
+        format: 'MM/DD/YYYY',
+        showDropdowns: true,
+        startDate: start_date,
+        endDate: end_date,
+        maxDate: end_date,
+        minDate: moment("01/01/2001")
+      },
+      function(start, end, label) {
+            start_date = start;
+            end_date = end;
+      }
+    )
+    update_date_range();
+    
+    $('#time-slider').slider({
+        orientation: "horizontal",
+        range: true,
+        min: 0,
+        max: 23,
+        values: [0,23],
+        slide: function(event, ui){
+            var s = ui.values[0]
+            var e = ui.values[1]
+            var start = convertTime(s);
+            var end = convertTime(e);
+            $('#time-start').html(start);
+            $('#time-end').html(end);
+            $('#time-start').data('value', s);
+            $('#time-end').data('value', e);
         }
     });
+    // if (typeof $.cookie('crimearound_us') === 'undefined'){
+    //     $.cookie('crimearound_us', JSON.stringify([]), {
+    //         json: true,
+    //         expires: 365
+    //     });
+    // } else {
+    //     var saves = $.cookie('crimearound_us');
+    //     saves = $.parseJSON(saves);
+    //     if (saves.length > 0){
+    //         var item = '<li class="has-dropdown"><a href="#">Remembered searches</a><ul class="dropdown saved-searches">';
+    //         $.each(saves, function(i, save){
+    //             item += '<li><a class="saved-search" href="javascript://">' + save.name + '</a>'
+    //             item += '<a href="javascript://" class="delete-search"><i class="foundicon-remove"></i></a></li>'
+    //         })
+    //         item += '</ul></li>';
+    //         $('#right-nav').prepend(item);
+    //         $('.saved-search').on('click', load_remembered_search);
+    //         $('.delete-search').on('click', delete_search);
+    //     }
+    // }
 
     function convertTime(time){
         var meridian = time < 12 ? 'am' : 'pm';
@@ -325,7 +198,7 @@
         meta.update();
     }
 
-    function edit_create(){
+    function submit_search(){
         $('#map').spin('large')
         var query = {'dataset_name': 'chicago_crimes_all'};
         var layers = drawnItems.getLayers();
@@ -343,18 +216,9 @@
                 query['locations'] = locations.join(',');
             }
         }
-        var start = $('.start').val().replace('Start Date: ', '');
-        var end = $('.end').val().replace('End Date: ', '');
-        start = moment(start)
-        end = moment(end)
-        var date_valid = false;
-        if (start.isValid() && end.isValid()){
-            start = start.format('YYYY/MM/DD');
-            end = end.format('YYYY/MM/DD');
-            date_valid = true;
-        }
-        query['obs_date__le'] = end;
-        query['obs_date__ge'] = start;
+
+        query['obs_date__ge'] = start_date.format('YYYY/MM/DD');
+        query['obs_date__le'] = end_date.format('YYYY/MM/DD');
         var time_start = $('#time-start').data('value');
         var time_end = $('#time-end').data('value');
         query['orig_date__time_of_day_ge'] = time_start;
@@ -377,24 +241,20 @@
                 query['beat__in'] = bts.join(',');
             }
         }
-        if(date_valid){
-            $.when(get_results(query)).then(function(resp){
-                if (typeof query.beat__in !== 'undefined'){
-                    add_beats(query.beat__in.split(','));
-                }
-                add_resp_to_map(query, resp);
-                if (beats.getLayers().length > 0){
-                    map.fitBounds(beats.getBounds());
-                } else if (crimes.getLayers().length > 0){
-                    map.fitBounds(crimes.getBounds());
-                }
-            }).fail(function(data){
-                console.log(data);
-            })
-        } else {
-            $('#map').spin(false);
-            $('#date-error').reveal();
-        }
+
+        $.when(get_results(query)).then(function(resp){
+            if (typeof query.beat__in !== 'undefined'){
+                add_beats(query.beat__in.split(','));
+            }
+            add_resp_to_map(query, resp);
+            if (beats.getLayers().length > 0){
+                map.fitBounds(beats.getBounds());
+            } else if (crimes.getLayers().length > 0){
+                map.fitBounds(crimes.getBounds());
+            }
+        }).fail(function(data){
+            console.log(data);
+        })
     }
 
     function add_beats(b){
@@ -503,10 +363,14 @@
             });
             drawnItems.addLayer(geo);
         }
-        var start = query['obs_date__ge'];
-        var end = query['obs_date__le'];
-        $('.start').val(moment(start).format('MM/DD/YYYY'));
-        $('.end').val(moment(end).format('MM/DD/YYYY'));
+
+        start_date = moment(query['obs_date__ge']);
+        end_date = moment(query['obs_date__le']);
+        update_date_range();
+        
+        $('#date_range').data('daterangepicker').setStartDate(start_date);
+        $('#date_range').data('daterangepicker').setEndDate(end_date);
+
         if(typeof query['beat__in'] !== 'undefined'){
             $.each(query['beat__in'].split(','), function(i, beat){
                 $('#police-beat').find('[value="' + beat + '"]').attr('selected', 'selected');
@@ -656,5 +520,9 @@
 
     function resize_junk(){
         $('.full-height').height(window.innerHeight - 45);
+    }
+
+    function update_date_range(){
+        $('#date_range').val(start_date.format('MM/DD/YYYY') + " - " + end_date.format('MM/DD/YYYY'));
     }
 })()
